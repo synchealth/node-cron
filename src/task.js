@@ -11,9 +11,37 @@ module.exports = (function(){
     }
     return pattern === value.toString();
   }
+  
+  function keyForDate(date) {
+    
+    return [date.getMonth(), date.getDate(), date.getHours(), date.getMinutes()].join("-")
+  }
 
-  function mustRun(task, date){
-    var runInSecond = matchPattern(task.expressions[0], date.getSeconds());
+  function Task(pattern, execution){
+    validatePattern(pattern);
+    this.initialPattern = pattern.split(' ');
+    this.pattern = convertExpression(pattern);
+    this.execution = execution;
+    this.expressions = this.pattern.split(' ');
+    this.lastFireKey = null;
+  }
+
+  Task.prototype.update = function(date){
+    if(this.mustRun(this, date)){
+      try {
+        this.execution();
+      } catch(err) {
+        console.error(err);
+      }
+    }
+  };
+  
+  Task.prototype.mustRun = function(task, date){
+    const dateKey = keyForDate(date)
+    if (dateKey == this.lastFireKey) {
+      return false
+    }
+    this.lastFireKey = dateKey
     var runOnMinute = matchPattern(task.expressions[1], date.getMinutes());
     var runOnHour = matchPattern(task.expressions[2], date.getHours());
     var runOnDayOfMonth = matchPattern(task.expressions[3], date.getDate());
@@ -31,26 +59,8 @@ module.exports = (function(){
       runOnDay = runOnDayOfMonth || runOnDayOfWeek;
     }
 
-    return runInSecond && runOnMinute && runOnHour && runOnDay && runOnMonth;
+    return runOnMinute && runOnHour && runOnDay && runOnMonth;
   }
-
-  function Task(pattern, execution){
-    validatePattern(pattern);
-    this.initialPattern = pattern.split(' ');
-    this.pattern = convertExpression(pattern);
-    this.execution = execution;
-    this.expressions = this.pattern.split(' ');
-  }
-
-  Task.prototype.update = function(date){
-    if(mustRun(this, date)){
-      try {
-        this.execution();
-      } catch(err) {
-        console.error(err);
-      }
-    }
-  };
 
   return Task;
 }());

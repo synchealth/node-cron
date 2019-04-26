@@ -3,6 +3,9 @@
 var Task = require('./task'),
   ScheduledTask = require('./scheduled-task'),
   validation = require('./pattern-validation');
+  
+
+var scheduledTask = null;
 
 module.exports = (function() {
 
@@ -17,8 +20,12 @@ module.exports = (function() {
    */
   function createTask(expression, func, immediateStart) {
     var task = new Task(expression, func);
-
-    return new ScheduledTask(task, immediateStart);
+    
+    if (!scheduledTask) {
+      scheduledTask = new ScheduledTask(task, immediateStart);
+    } else {
+      scheduledTask.addTask(task)
+    }
   }
 
   function validate(expression) {
